@@ -1,4 +1,4 @@
-package com.empresa.App;
+ package com.empresa.App;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -18,6 +18,7 @@ public class InventoryApp {
     private JTextField txtCantidad;
     private JTextField txtPrecio;
     private JTable tablaInventario;
+    private JTextField txtBuscar;
 
     public static void main(String[] args) {
         try {
@@ -50,8 +51,9 @@ public class InventoryApp {
     private void initialize() {
         frmGestinDeInventario = new JFrame();
         frmGestinDeInventario.setTitle("Gestión de Inventario");
-        frmGestinDeInventario.setBounds(0, 0, 1920, 1080);
-        frmGestinDeInventario.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        frmGestinDeInventario.setSize(screenSize);
+        frmGestinDeInventario.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frmGestinDeInventario.getContentPane().setLayout(new BorderLayout(0, 0));
 
         JPanel panelFormulario = new JPanel();
@@ -82,6 +84,16 @@ public class InventoryApp {
         gbc_txtNombre.gridy = 0;
         panelFormulario.add(txtNombre, gbc_txtNombre);
         txtNombre.setColumns(10);
+        
+        JLabel lblNewLabel_3 = new JLabel("Buscador:");
+        lblNewLabel_3.setFont(new Font("Tahoma", Font.PLAIN, 20));
+        lblNewLabel_3.setHorizontalAlignment(SwingConstants.CENTER);
+        GridBagConstraints gbc_lblNewLabel_3 = new GridBagConstraints();
+        gbc_lblNewLabel_3.anchor = GridBagConstraints.BELOW_BASELINE;
+        gbc_lblNewLabel_3.insets = new Insets(0, 0, 5, 0);
+        gbc_lblNewLabel_3.gridx = 2;
+        gbc_lblNewLabel_3.gridy = 0;
+        panelFormulario.add(lblNewLabel_3, gbc_lblNewLabel_3);
 
         JLabel lblNewLabel_1 = new JLabel("Cantidad:");
         lblNewLabel_1.setFont(new Font("Tahoma", Font.PLAIN, 20));
@@ -101,6 +113,32 @@ public class InventoryApp {
         gbc_txtCantidad.gridy = 1;
         panelFormulario.add(txtCantidad, gbc_txtCantidad);
         txtCantidad.setColumns(10);
+        
+        txtBuscar = new JTextField();
+        txtBuscar.setFont(new Font("Tahoma", Font.PLAIN, 20));
+        txtBuscar.setHorizontalAlignment(SwingConstants.CENTER);
+        GridBagConstraints gbc_txtBuscar = new GridBagConstraints();
+        gbc_txtBuscar.insets = new Insets(0, 0, 5, 0);
+        gbc_txtBuscar.gridx = 2;
+        gbc_txtBuscar.gridy = 1;
+        panelFormulario.add(txtBuscar, gbc_txtBuscar);
+        txtBuscar.setColumns(10);
+        txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                filtrarProductos(txtBuscar.getText());
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filtrarProductos(txtBuscar.getText());
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filtrarProductos(txtBuscar.getText());
+            }
+        });
 
         JLabel lblNewLabel_2 = new JLabel("Precio:");
         lblNewLabel_2.setFont(new Font("Tahoma", Font.PLAIN, 20));
@@ -127,20 +165,41 @@ public class InventoryApp {
 
         JButton btnAgregar = new JButton("Agregar");
         btnAgregar.setFont(new Font("Tahoma", Font.PLAIN, 20));
+        btnAgregar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                agregarProducto();
+            }
+        });
         panelBotones.add(btnAgregar);
 
         JButton btnModificar = new JButton("Modificar");
         btnModificar.setFont(new Font("Tahoma", Font.PLAIN, 20));
+        btnModificar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                modificarProducto();
+            }
+        });
         panelBotones.add(btnModificar);
 
         JButton btnEliminar = new JButton("Eliminar");
         btnEliminar.setFont(new Font("Tahoma", Font.PLAIN, 20));
+        btnEliminar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                eliminarProducto();
+            }
+        });
         panelBotones.add(btnEliminar);
 
         JButton btnGenerarInforme = new JButton("Generar Informe");
         btnGenerarInforme.setFont(new Font("Tahoma", Font.PLAIN, 20));
+        btnGenerarInforme.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                generarInforme();
+            }
+        });
         panelBotones.add(btnGenerarInforme);
-
+        
+       
         JPanel panelTabla = new JPanel();
         frmGestinDeInventario.getContentPane().add(panelTabla, BorderLayout.CENTER);
         panelTabla.setLayout(new BorderLayout(0, 0));
@@ -165,30 +224,6 @@ public class InventoryApp {
         DefaultTableCellRenderer headerRenderer = (DefaultTableCellRenderer) tablaInventario.getTableHeader().getDefaultRenderer();
         headerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         tablaInventario.getTableHeader().setFont(new Font("Tahoma", Font.PLAIN, 16));
-        
-        btnAgregar.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                agregarProducto();
-            }
-        });
-
-        btnModificar.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                modificarProducto();
-            }
-        });
-
-        btnEliminar.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                eliminarProducto();
-            }
-        });
-
-        btnGenerarInforme.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                generarInforme();
-            }
-        });
 
         tablaInventario.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent event) {
@@ -224,6 +259,7 @@ public class InventoryApp {
             JOptionPane.showMessageDialog(frmGestinDeInventario, "Error al cargar los datos del inventario.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
     private void agregarProducto() {
         try {
@@ -345,4 +381,18 @@ public class InventoryApp {
         txtCantidad.setText("");
         txtPrecio.setText("");
     }
+    
+    private void filtrarProductos(String term) {
+        DefaultTableModel model = (DefaultTableModel) tablaInventario.getModel();
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        tablaInventario.setRowSorter(sorter);
+
+        if (term.trim().length() == 0) {
+            sorter.setRowFilter(null);
+        } else {
+            RowFilter<DefaultTableModel, Object> rf = RowFilter.regexFilter("(?i)" + term);
+            sorter.setRowFilter(rf);
+        }
+    }
+    
 }
