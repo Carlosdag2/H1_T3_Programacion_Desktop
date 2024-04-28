@@ -1,6 +1,7 @@
 package com.empresa.persistence;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,9 @@ public class InventoryPersistence {
                 String nombre = rs.getString("nombre");
                 int cantidad = rs.getInt("cantidad");
                 double precio = rs.getDouble("precio");
-                productList.add(new InventoryDto(id, nombre, cantidad, precio));
+                Timestamp fechaCreacion = rs.getTimestamp("fecha_creacion");
+                Timestamp fechaModificacion = rs.getTimestamp("fecha_modificacion");
+                productList.add(new InventoryDto(id, nombre, cantidad, precio, fechaCreacion, fechaModificacion));
             }
         }
         return productList;
@@ -30,11 +33,12 @@ public class InventoryPersistence {
 
     public static boolean addProduct(InventoryDto product) throws SQLException {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-             PreparedStatement stmt = conn.prepareStatement("INSERT INTO inventario (nombre, cantidad, precio) VALUES (?, ?, ?)")) {
+             PreparedStatement stmt = conn.prepareStatement("INSERT INTO inventario (nombre, cantidad, precio, fecha_creacion) VALUES (?, ?, ?, ?)")) {
 
             stmt.setString(1, product.getNombre());
             stmt.setInt(2, product.getCantidad());
             stmt.setDouble(3, product.getPrecio());
+            stmt.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now()));
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
         }
@@ -46,15 +50,16 @@ public class InventoryPersistence {
         }
         
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-             PreparedStatement stmt = conn.prepareStatement("UPDATE inventario SET nombre=?, cantidad=?, precio=? WHERE id=?")) {
+                PreparedStatement stmt = conn.prepareStatement("UPDATE inventario SET nombre=?, cantidad=?, precio=?, fecha_modificacion=? WHERE id=?")) {
 
-            stmt.setString(1, product.getNombre());
-            stmt.setInt(2, product.getCantidad());
-            stmt.setDouble(3, product.getPrecio());
-            stmt.setInt(4, product.getId());
-            int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0;
-        }
+               stmt.setString(1, product.getNombre());
+               stmt.setInt(2, product.getCantidad());
+               stmt.setDouble(3, product.getPrecio());
+               stmt.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now()));
+               stmt.setInt(5, product.getId());
+               int rowsAffected = stmt.executeUpdate();
+               return rowsAffected > 0;
+           }
     }
 
     public static boolean deleteProduct(int productId) throws SQLException {

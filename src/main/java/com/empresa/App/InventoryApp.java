@@ -5,7 +5,9 @@ import javax.swing.table.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.URI;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import com.empresa.Dto.InventoryDto;
@@ -194,7 +196,26 @@ public class InventoryApp {
         btnGenerarInforme.setFont(new Font("Tahoma", Font.PLAIN, 20));
         btnGenerarInforme.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                generarInforme();
+                try {
+                	// Verifica si el sistema soporta el Desktop
+                	if (Desktop.isDesktopSupported()) {
+                            Desktop desktop = Desktop.getDesktop();
+                            if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                                // Abrir la URL deseada
+                                URI uri = new URI("http://localhost:8080/informehito/");
+                                desktop.browse(uri);
+                            } 
+                            else {
+                                System.out.println("La acción de navegación no es compatible.");
+                            }
+                        } 
+                        else {
+                            System.out.println("Desktop no es compatible.");
+                        }
+                    } 
+                    catch (Exception ex) {
+                        ex.printStackTrace(); // Imprime cualquier error para depuración
+                    }
             }
         });
         panelBotones.add(btnGenerarInforme);
@@ -248,11 +269,20 @@ public class InventoryApp {
             model.addColumn("Nombre");
             model.addColumn("Cantidad");
             model.addColumn("Precio");
+            model.addColumn("Fecha de Creación");
+            model.addColumn("Fecha de Modificación");
 
             for (InventoryDto product : productList) {
-                model.addRow(new Object[] { product.getId(), product.getNombre(), product.getCantidad(), product.getPrecio() });
+                
+                model.addRow(new Object[] { 
+                    product.getId(), 
+                    product.getNombre(), 
+                    product.getCantidad(), 
+                    product.getPrecio(), 
+                    product.getFechaCreacion().toString(), 
+                    product.getFechaModificacion().toString()
+                });
             }
-
             tablaInventario.setModel(model);
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -273,7 +303,7 @@ public class InventoryApp {
                 return;
             }
 
-            InventoryDto product = new InventoryDto(0, nombre, cantidad, precio);
+            InventoryDto product = new InventoryDto(0, nombre, cantidad, precio, null, null);
 
             if (InventoryPersistence.addProduct(product)) {
                 JOptionPane.showMessageDialog(frmGestinDeInventario, "Producto agregado correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
@@ -304,7 +334,12 @@ public class InventoryApp {
             int cantidad = Integer.parseInt(txtCantidad.getText());
             double precio = Double.parseDouble(txtPrecio.getText());
 
-            InventoryDto product = new InventoryDto(id, nombre, cantidad, precio);
+            if (cantidad < 0 || precio < 0) {
+                JOptionPane.showMessageDialog(frmGestinDeInventario, "La cantidad y el precio no pueden ser negativos.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            InventoryDto product = new InventoryDto(id, nombre, cantidad, precio, null, null);
 
             if (InventoryPersistence.updateProduct(product)) {
                 JOptionPane.showMessageDialog(frmGestinDeInventario, "Producto modificado correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
@@ -321,6 +356,7 @@ public class InventoryApp {
             JOptionPane.showMessageDialog(frmGestinDeInventario, "Error al modificar el producto.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
     private void eliminarProducto() {
         try {
@@ -341,38 +377,6 @@ public class InventoryApp {
         } catch (SQLException ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(frmGestinDeInventario, "Error al eliminar el producto.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void generarInforme() {
-        try {
-            JDialog dialog = new JDialog(frmGestinDeInventario, "Informe de Inventario", true);
-            dialog.setSize(800, 600);
-            dialog.getContentPane().setLayout(new BorderLayout());
-
-            DefaultTableModel model = new DefaultTableModel() {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-            model.addColumn("Nombre");
-            model.addColumn("Cantidad");
-            model.addColumn("Precio");
-
-            for (int i = 0; i < tablaInventario.getRowCount(); i++) {
-                String nombre = tablaInventario.getValueAt(i, 1).toString();
-                int cantidad = Integer.parseInt(tablaInventario.getValueAt(i, 2).toString());
-                double precio = Double.parseDouble(tablaInventario.getValueAt(i, 3).toString());
-                model.addRow(new Object[] { nombre, cantidad, precio });
-            }
-
-            JTable table = new JTable(model);
-            dialog.getContentPane().add(new JScrollPane(table), BorderLayout.CENTER);
-            dialog.setVisible(true);
-        } catch (NumberFormatException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(frmGestinDeInventario, "Error al generar el informe. Por favor, asegúrese de que los datos sean numéricos.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
