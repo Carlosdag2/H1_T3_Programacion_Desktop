@@ -7,7 +7,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.net.URI;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.List;
 
 import com.empresa.Dto.InventoryDto;
